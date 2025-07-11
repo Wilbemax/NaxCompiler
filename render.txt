@@ -1,0 +1,25 @@
+[
+  {
+    "type": "VariableDeclaration",
+    "name": "a",
+    "value": {
+      "type": "BinaryExpression",
+      "operator": "+",
+      "left": {
+        "type": "StringLiteral",
+        "value": "this is "
+      },
+      "right": {
+        "type": "StringLiteral",
+        "value": "nax compiler"
+      }
+    }
+  },
+  {
+    "type": "PrintStatement",
+    "argument": {
+      "type": "Identifier",
+      "value": "a"
+    }
+  }
+]
