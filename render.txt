@@ -3,23 +3,55 @@
     "type": "VariableDeclaration",
     "name": "a",
     "value": {
-      "type": "BinaryExpression",
-      "operator": "+",
-      "left": {
-        "type": "StringLiteral",
-        "value": "this is "
-      },
-      "right": {
-        "type": "StringLiteral",
-        "value": "nax compiler"
-      }
+      "type": "NumberLiteral",
+      "value": "11"
     }
   },
   {
-    "type": "PrintStatement",
-    "argument": {
-      "type": "Identifier",
-      "value": "a"
+    "type": "IfStatement",
+    "condition": {
+      "type": "BinaryComparison",
+      "operator": ">",
+      "left": {
+        "type": "Identifier",
+        "value": "a"
+      },
+      "right": {
+        "type": "NumberLiteral",
+        "value": "10"
+      }
+    },
+    "consequent": {
+      "type": "BlockStatement",
+      "body": [
+        {
+          "type": "PrintStatement",
+          "argument": {
+            "type": "BinaryExpression",
+            "operator": "*",
+            "left": {
+              "type": "Identifier",
+              "value": "a"
+            },
+            "right": {
+              "type": "NumberLiteral",
+              "value": "10"
+            }
+          }
+        }
+      ]
+    },
+    "alternate": {
+      "type": "BlockStatement",
+      "body": [
+        {
+          "type": "PrintStatement",
+          "argument": {
+            "type": "StringLiteral",
+            "value": "IDK"
+          }
+        }
+      ]
     }
   }
 ]

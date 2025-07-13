@@ -4,6 +4,21 @@ function parser(tokens) {
 	function parseExpression() {
 		let node = parseTerm();
 
+		if (isComparisonOp(tokens[pos])) {
+			while (pos < tokens.length && isComparisonOp(tokens[pos])) {
+				const operator = tokens[pos].value;
+				pos++;
+				const right = parseComparison();
+				node = {
+					type: 'BinaryComparison',
+					operator,
+					left: node,
+					right,
+				};
+			}
+			return node;
+		}
+
 		while (pos < tokens.length && isAddOp(tokens[pos])) {
 			const operator = tokens[pos].value;
 			pos++;
@@ -40,7 +55,7 @@ function parser(tokens) {
 	function parseFactor() {
 		const token = tokens[pos];
 
-		if (token.type === 'number') {			
+		if (token.type === 'number') {
 			pos++;
 			return {
 				type: 'NumberLiteral',
@@ -55,12 +70,13 @@ function parser(tokens) {
 				value: token.value,
 			};
 		}
+
 		if (token.type === 'string') {
 			pos++;
 			return {
 				type: 'StringLiteral',
 				value: token.value,
-			}
+			};
 		}
 
 		if (token.type === 'operator' && token.value === '(') {
@@ -77,6 +93,26 @@ function parser(tokens) {
 		throw new Error(`Unexpected token in factor: ${token.type} ${token.value}`);
 	}
 
+	function parserBlock() {
+		const body = [];
+		while (
+			pos < tokens.length &&
+			!(tokens[pos].type === 'operator' && tokens[pos].value === '}')
+		) {
+			body.push(walk());
+		}
+
+		if (tokens[pos].value !== '}') {
+			throw new Error('Expected "}" at the end of the block');
+		}
+
+		pos++;
+		return {
+			type: 'BlockStatement',
+			body,
+		};
+	}
+
 	function isAddOp(token) {
 		return (
 			token.type === 'operator' && (token.value === '+' || token.value === '-')
@@ -88,9 +124,34 @@ function parser(tokens) {
 			token.type === 'operator' && (token.value === '*' || token.value === '/')
 		);
 	}
+	function isComparisonOp(token) {
+		return (
+			token.type === 'operator' &&
+			['>', '<', '>=', '<=', '==', '!='].includes(token.value)
+		);
+	}
+
+	function parseComparison() {
+		let node = parseTerm();
+
+		while (pos < tokens.length && isComparisonOp(tokens[pos])) {
+			const operator = tokens[pos].value;
+			pos++;
+			const right = parseTerm();
+			node = {
+				type: 'BinaryComparison',
+				operator,
+				left: node,
+				right,
+			};
+		}
+
+		return node;
+	}
+
 	function walk() {
 		const token = tokens[pos];
-
+		console.log('walk():', token);
 		if (token.type === 'keyword') {
 			switch (token.value) {
 				case 'let':
@@ -109,34 +170,28 @@ function parser(tokens) {
 
 					let valueNode = parseExpression();
 
-					pos++;
-					if (tokens[pos].type === 'semicolon') pos++;
+					if (tokens[pos]?.type === 'semicolon') pos++;
 					return {
 						type: 'VariableDeclaration',
 						name,
 						value: valueNode,
 					};
+
 				case 'print':
 					pos++;
-					const leftParen = tokens[pos];
-					if (leftParen.type !== 'operator' || leftParen.value !== '(') {
+					if (tokens[pos].type !== 'operator' || tokens[pos].value !== '(') {
 						throw new Error("Expected '(' after 'print'");
 					}
 
 					pos++;
-					const arg = tokens[pos];
-					if (arg.type !== 'identifier' && arg.type !== 'number' && arg.type !== 'string') {
-						throw new Error('Expected identifier or number or string in print()');
-					}
-					
+					const arg = parseExpression();
+
 					const argumentNode = {
-						type: arg.type === 'identifier' ? 'Identifier' :  arg.type === 'NumberLiteral' ? 'NumberLiteral' : 'StringLiteral',
+						type: arg.type,
 						value: arg.value,
 					};
 
-					pos++;
-					const rightParen = tokens[pos];
-					if (rightParen.type !== 'operator' || rightParen.value !== ')') {
+					if (tokens[pos].type !== 'operator' || tokens[pos].value !== ')') {
 						throw new Error("Expected ')' after print argument");
 					}
 
@@ -145,10 +200,60 @@ function parser(tokens) {
 
 					return {
 						type: 'PrintStatement',
-						argument: argumentNode,
+						argument: arg,
+					};
+
+				case 'if':
+					pos++;
+					if (tokens[pos].type !== 'operator' || tokens[pos].value !== '(') {
+						throw new Error("Expected '(' after 'if'");
+					}
+					pos++;
+
+					const condition = parseExpression();
+					console.log(tokens[pos]);
+
+					if (tokens[pos].type !== 'operator' || tokens[pos].value !== ')') {
+						throw new Error("Expected ')' after condition");
+					}
+					pos++;
+
+					let consequent = null;
+					if (tokens[pos].type === 'operator' && tokens[pos].value === '{') {
+						pos++;
+						consequent = parserBlock();
+					} else {
+						consequent = walk();
+					}
+
+					let alternate = null;
+					if (tokens[pos]?.type === 'keyword' && tokens[pos].value === 'else') {
+						pos++;
+						if (tokens[pos].type === 'operator' && tokens[pos].value === '{') {
+							pos++;
+							alternate = parserBlock();
+						} else {
+							alternate = walk();
+						}
+					}
+
+					return {
+						type: 'IfStatement',
+						condition,
+						consequent,
+						alternate,
 					};
 			}
 		}
+
+		const expr = parseExpression();
+
+		if (tokens[pos]?.type === 'semicolon') pos++;
+
+		return {
+			type: 'ExpressionStatement',
+			expression: expr,
+		};
 	}
 
 	const ast = [];
