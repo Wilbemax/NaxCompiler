@@ -4,7 +4,7 @@
     "name": "a",
     "value": {
       "type": "NumberLiteral",
-      "value": "11"
+      "value": "2"
     }
   },
   {
@@ -42,16 +42,43 @@
       ]
     },
     "alternate": {
-      "type": "BlockStatement",
-      "body": [
-        {
-          "type": "PrintStatement",
-          "argument": {
-            "type": "StringLiteral",
-            "value": "IDK"
-          }
+      "type": "IfStatement",
+      "condition": {
+        "type": "BinaryComparison",
+        "operator": "==",
+        "left": {
+          "type": "Identifier",
+          "value": "a"
+        },
+        "right": {
+          "type": "NumberLiteral",
+          "value": "5"
         }
-      ]
+      },
+      "consequent": {
+        "type": "BlockStatement",
+        "body": [
+          {
+            "type": "PrintStatement",
+            "argument": {
+              "type": "StringLiteral",
+              "value": "IDK"
+            }
+          }
+        ]
+      },
+      "alternate": {
+        "type": "BlockStatement",
+        "body": [
+          {
+            "type": "PrintStatement",
+            "argument": {
+              "type": "StringLiteral",
+              "value": "nax"
+            }
+          }
+        ]
+      }
     }
   }
 ]

@@ -3,7 +3,7 @@ const isDigit = (char) => /[0-9]/.test(char);
 const isIdentifierStart = (char) => /[a-zA-Z_]/.test(char);
 const isIdentifierChar = (char) => /[a-zA-Z0-9_]/.test(char);
 
-function tokenize(str) {
+export function tokenize(str) {
 	const tokens = [];
 	let pos = 0;
 
@@ -84,5 +84,3 @@ function tokenize(str) {
 
 	return tokens;
 }
-
-module.exports = { tokenize };

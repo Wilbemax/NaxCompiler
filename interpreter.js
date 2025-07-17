@@ -1,107 +1,48 @@
-function evaluate(node, env) {
+import {
+	BinaryComparison,
+	BinaryExpression,
+	BlockStatement,
+	Identifier,
+	IfStatement,
+	NumericLiteral,
+	PrintStatement,
+	StringLiteral,
+	VariableDeclaration,
+} from './evaluateNode/index.js';
+
+export function evaluate(node, env) {
 	if (!node) {
 		throw new Error(`Invalid node: ${JSON.stringify(node)}`);
 	}
-	let left = null;
-	let right = null;
+	console.log(node, 'print node');
+	
 	switch (node.type) {
 		case 'NumberLiteral':
-			return Number(node.value);
+			return NumericLiteral(node, env);
 		case 'StringLiteral':
-			return node.value.toString();
+			return StringLiteral(node, env);
 		case 'Identifier':
-			console.log(env);
-			if (env.hasOwnProperty(node.value)) {
-				return env[node.value];
-			} else {
-				throw new Error(`Undefined variable "${node.value}"`);
-			}
+			return Identifier(node, env);
 		case 'BinaryExpression':
-			left = evaluate(node.left, env);
-			right = evaluate(node.right, env);
-
-			switch (node.operator) {
-				case '+':
-					return left + right;
-				case '-':
-					return left - right;
-				case '*':
-					return left * right;
-				case '/':
-					if (right === 0) {
-						throw new Error('Division by zero');
-					} else {
-						return left / right;
-					}
-				default:
-					throw new Error(`Unknown operator: ${node.operator}`);
-			}
-
+			return BinaryExpression(node, env);
 		case 'BinaryComparison':
-			if (!node.left || !node.right || !node.operator) {
-				throw new Error(
-					`Incomplete BinaryComparison node: ${JSON.stringify(node)}`
-				);
-			}
-			console.log(
-				'left',
-				left,
-				'right',
-				right,
-				'node',
-				node.operator,
-				'env',
-				env
-			);
-			left = evaluate(node.left, env);
-			right = evaluate(node.right, env);
-
-			switch (node.operator) {
-				case '==':
-					return left === right;
-				case '!=':
-					return left !== right;
-				case '>':
-					return left > right;
-				case '<':
-					return left < right;
-				case '>=':
-					return left >= right;
-				case '<=':
-					return left <= right;
-				default:
-					throw new Error(`Unknown comparison operator: ${node.operator}`);
-			}
+			return BinaryComparison(node, env);
 		case 'VariableDeclaration':
-			const value = evaluate(node.value, env);
-			env[node.name] = value;
-			return;
+			return VariableDeclaration(node, env);
 		case 'PrintStatement':
-			const result = evaluate(node.argument, env);
-			console.log(result);
-			return;
+			return PrintStatement(node, env);
 		case 'IfStatement':
-			if (evaluate(node.condition, env)) {
-				evaluate(node.consequent, env);
-			} else if (node.alternate) {
-				evaluate(node.alternate, env);
-			}
-			return;
+			return IfStatement(node, env);
 		case 'BlockStatement':
-			for (const stmt of node.body) {
-				evaluate(stmt, env);
-			}
-			return;
+			return BlockStatement(node, env);
 		default:
 			throw new Error(`Unknown node type "${node.type}"`);
 	}
 }
 
-function interpreter(ast) {
+export function interpreter(ast) {
 	const env = {};
 	for (const node of ast) {
 		evaluate(node, env);
 	}
 }
-
-module.exports = { interpreter };

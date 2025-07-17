@@ -1,0 +1,1 @@
+export const StringLiteral = (node, env) =>  node.value.toString();
