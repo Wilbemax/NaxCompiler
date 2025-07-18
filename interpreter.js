@@ -14,8 +14,8 @@ export function evaluate(node, env) {
 	if (!node) {
 		throw new Error(`Invalid node: ${JSON.stringify(node)}`);
 	}
-	console.log(node, 'print node');
-	
+	// console.log(node, 'print node');
+
 	switch (node.type) {
 		case 'NumberLiteral':
 			return NumericLiteral(node, env);

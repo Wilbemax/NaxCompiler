@@ -1,110 +1,129 @@
-import { parseExpression } from "./parserExpression.js";
-import { parserBlock } from "./parserBlock.js";
+import { parseExpression } from './parserExpression.js';
+import { parserBlock } from './parserBlock.js';
 
+export function walk(context) {
+	const token = context.tokens[context.pos];
+	// console.log('walk():', context.tokens[context.pos], context);
+	if (token.type === 'keyword') {
+		switch (context.tokens[context.pos].value) {
+			case 'let':
+				context.pos++;
+				const variableName = context.tokens[context.pos];
+				if (variableName.type !== 'identifier') {
+					throw new Error(`Expected identifier, got ${variableName.type}`);
+				}
+				const name = variableName.value;
+				context.pos++;
+				let operator = context.tokens[context.pos];
+				if (operator.type !== 'operator' || operator.value !== '=') {
+					throw new Error(`Expected '=', got ${operator.type}`);
+				}
+				context.pos++;
 
-export function walk(tokens, pos) {
-		const token = tokens[pos];
-		console.log('walk():', token);
-		if (token.type === 'keyword') {
-			switch (token.value) {
-				case 'let':
-					pos++;
-					const variableName = tokens[pos];
-					if (variableName.type !== 'identifier') {
-						throw new Error(`Expected identifier, got ${variableName.type}`);
-					}
-					const name = variableName.value;
-					pos++;
-					let operator = tokens[pos];
-					if (operator.type !== 'operator' || operator.value !== '=') {
-						throw new Error(`Expected '=', got ${operator.type}`);
-					}
-					pos++;
+				let valueNode = parseExpression(context);
 
-					let valueNode = parseExpression(tokens, pos);
+				if (context.tokens[context.pos]?.type === 'semicolon') context.pos++;
+				return {
+					type: 'VariableDeclaration',
+					name,
+					value: valueNode,
+				};
 
-					if (tokens[pos]?.type === 'semicolon') pos++;
-					return {
-						type: 'VariableDeclaration',
-						name,
-						value: valueNode,
-					};
+			case 'print':
+				context.pos++;
+				if (
+					context.tokens[context.pos].type !== 'operator' ||
+					context.tokens[context.pos].value !== '('
+				) {
+					throw new Error("Expected '(' after 'print'");
+				}
 
-				case 'print':
-					pos++;
-					if (tokens[pos].type !== 'operator' || tokens[pos].value !== '(') {
-						throw new Error("Expected '(' after 'print'");
-					}
+				context.pos++;
+				const arg = parseExpression(context);
 
-					pos++;
-					const arg = parseExpression(tokens, pos);
+				const argumentNode = {
+					type: arg.type,
+					value: arg.value,
+				};
 
-					const argumentNode = {
-						type: arg.type,
-						value: arg.value,
-					};
+				if (
+					context.tokens[context.pos].type !== 'operator' ||
+					context.tokens[context.pos].value !== ')'
+				) {
+					throw new Error("Expected ')' after print argument");
+				}
 
-					if (tokens[pos].type !== 'operator' || tokens[pos].value !== ')') {
-						throw new Error("Expected ')' after print argument");
-					}
+				context.pos++;
+				if (context.tokens[context.pos]?.type === 'semicolon') context.pos++;
 
-					pos++;
-					if (tokens[pos]?.type === 'semicolon') pos++;
+				return {
+					type: 'PrintStatement',
+					argument: arg,
+				};
 
-					return {
-						type: 'PrintStatement',
-						argument: arg,
-					};
+			case 'if':
+				context.pos++;
+				if (
+					context.tokens[context.pos].type !== 'operator' ||
+					context.tokens[context.pos].value !== '('
+				) {
+					throw new Error("Expected '(' after 'if'");
+				}
+				context.pos++;
 
-				case 'if':
-					pos++;
-					if (tokens[pos].type !== 'operator' || tokens[pos].value !== '(') {
-						throw new Error("Expected '(' after 'if'");
-					}
-					pos++;
+				const condition = parseExpression(context);
 
-					const condition = parseExpression(tokens, pos);
-					console.log(tokens[pos]);
+				if (
+					context.tokens[context.pos].type !== 'operator' ||
+					context.tokens[context.pos].value !== ')'
+				) {
+					throw new Error("Expected ')' after condition");
+				}
+				context.pos++;
 
-					if (tokens[pos].type !== 'operator' || tokens[pos].value !== ')') {
-						throw new Error("Expected ')' after condition");
-					}
-					pos++;
+				let consequent = null;
+				if (
+					context.tokens[context.pos].type === 'operator' &&
+					context.tokens[context.pos].value === '{'
+				) {
+					context.pos++;
+					consequent = parserBlock(context);
+				} else {
+					consequent = walk(context);
+				}
 
-					let consequent = null;
-					if (tokens[pos].type === 'operator' && tokens[pos].value === '{') {
-						pos++;
-						consequent = parserBlock(tokens, pos);
+				let alternate = null;
+				if (
+					context.tokens[context.pos]?.type === 'keyword' &&
+					context.tokens[context.pos].value === 'else'
+				) {
+					context.pos++;
+					if (
+						context.tokens[context.pos].type === 'operator' &&
+						context.tokens[context.pos].value === '{'
+					) {
+						context.pos++;
+						alternate = parserBlock(context);
 					} else {
-						consequent = walk(tokens, pos);
+						alternate = walk(context);
 					}
+				}
 
-					let alternate = null;
-					if (tokens[pos]?.type === 'keyword' && tokens[pos].value === 'else') {
-						pos++;
-						if (tokens[pos].type === 'operator' && tokens[pos].value === '{') {
-							pos++;
-							alternate = parserBlock(tokens, pos);
-						} else {
-							alternate = walk(tokens, pos);
-						}
-					}
-
-					return {
-						type: 'IfStatement',
-						condition,
-						consequent,
-						alternate,
-					};
-			}
+				return {
+					type: 'IfStatement',
+					condition,
+					consequent,
+					alternate,
+				};
 		}
-
-		const expr = parseExpression(tokens, pos);
-
-		if (tokens[pos]?.type === 'semicolon') pos++;
-
-		return {
-			type: 'ExpressionStatement',
-			expression: expr,
-		};
 	}
+
+	const expr = parseExpression(context);
+
+	if (context.tokens[context.pos]?.type === 'semicolon') context.pos++;
+
+	return {
+		type: 'ExpressionStatement',
+		expression: expr,
+	};
+}

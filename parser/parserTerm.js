@@ -1,13 +1,13 @@
 import { isMulOp } from "./helpers/index.js";
 import { parseFactor } from "./parserFactor.js";
 
-export function parseTerm(tokens, pos) {
-		let node = parseFactor(tokens, pos);
+export function parseTerm(context) {
+		let node = parseFactor(context);
 
-		while (pos < tokens.length && isMulOp(tokens[pos])) {
-			const operator = tokens[pos].value;
-			pos++;
-			const right = parseFactor(tokens, pos);
+		while (context.pos < context.tokens.length && isMulOp(context.tokens[context.pos])) {
+			const operator = context.tokens[context.pos].value;
+			context.pos++;
+			const right = parseFactor(context);
 			node = {
 				type: 'BinaryExpression',
 				operator,

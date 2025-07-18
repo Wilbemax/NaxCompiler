@@ -3,7 +3,7 @@ import { evaluate } from '../interpreter.js';
 export const BinaryExpression = (node, env) => {
 	const left = evaluate(node.left, env);
 	const right = evaluate(node.right, env);
-console.log('node', node, 'env', env, 'left', left, 'right', right, "in binary expression");
+// console.log('node', node, 'env', env, 'left', left, 'right', right, "in binary expression");
 
 	switch (node.operator) {
 		case '+':

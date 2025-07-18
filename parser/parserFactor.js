@@ -1,26 +1,26 @@
 import { parseExpression } from "./parserExpression.js";
 
-export function parseFactor(tokens, pos) {
-	const token = tokens[pos];
+export function parseFactor(context) {
+	const token = context.tokens[context.pos];
 
-	if (token.type === 'number') {
-		pos++;
+	if ( context.tokens[context.pos].type === 'number') {
+		context.pos++;
 		return {
 			type: 'NumberLiteral',
 			value: token.value,
 		};
 	}
 
-	if (token.type === 'identifier') {
-		pos++;
+	if ( context.tokens[context.pos].type === 'identifier') {
+		context.pos++;
 		return {
 			type: 'Identifier',
 			value: token.value,
 		};
 	}
 
-	if (token.type === 'string') {
-		pos++;
+	if ( context.tokens[context.pos].type === 'string') {
+		context.pos++;
 		return {
 			type: 'StringLiteral',
 			value: token.value,
@@ -28,10 +28,10 @@ export function parseFactor(tokens, pos) {
 	}
 
 	if (token.type === 'operator' && token.value === '(') {
-		pos++;
-		const node = parseExpression(tokens, pos);
-		if (tokens[pos].type === 'operator' && tokens[pos].value === ')') {
-			pos++;
+		context.pos++;
+		const node = parseExpression(context);
+		if (token.type === 'operator' && token.value === ')') {
+			context.pos++;
 			return node;
 		} else {
 			throw new Error("Expected ')'");

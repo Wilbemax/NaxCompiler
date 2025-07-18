@@ -1,19 +1,19 @@
 import { walk } from "./walk.js";
 
-export function parserBlock(tokens, pos) {
+export function parserBlock(context) {
 	const body = [];
 	while (
-		pos < tokens.length &&
-		!(tokens[pos].type === 'operator' && tokens[pos].value === '}')
+		context.pos < context.tokens.length &&
+		!( context.tokens[context.pos].type === 'operator' &&  context.tokens[context.pos].value === '}')
 	) {
-		body.push(walk(tokens, pos));
+		body.push(walk(context));
 	}
 
-	if (tokens[pos].value !== '}') {
+	if ( context.tokens[context.pos].value !== '}') {
 		throw new Error('Expected "}" at the end of the block');
 	}
 
-	pos++;
+	context.pos++;
 	return {
 		type: 'BlockStatement',
 		body,
